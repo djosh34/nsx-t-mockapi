@@ -1,0 +1,82 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build --pull -t nsx-t-mockapi:ci .
+
+      - name: Save image
+        run: docker save nsx-t-mockapi:ci -o nsx-t-mockapi.tar
+
+      - name: Upload image
+        uses: actions/upload-artifact@v4
+        with:
+          name: nsx-t-mockapi-image
+          path: nsx-t-mockapi.tar
+          retention-days: 1
+
+  test:
+    name: Build and Run Dockerfile.test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build test image
+        run: docker build --pull -f Dockerfile.test -t nsx-t-mockapi:test .
+
+      - name: Run test image
+        run: docker run --rm nsx-t-mockapi:test
+
+  publish:
+    name: Publish to GHCR
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test
+    if: github.event_name == 'push'
+    steps:
+      - name: Download image
+        uses: actions/download-artifact@v4
+        with:
+          name: nsx-t-mockapi-image
+
+      - name: Load image
+        run: docker load -i nsx-t-mockapi.tar
+
+      - name: Login to GHCR
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push image
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          REF_NAME: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -eu
+
+          image="ghcr.io/$(printf '%s' "${REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          docker tag nsx-t-mockapi:ci "${image}:${SHA}"
+          docker push "${image}:${SHA}"
+
+          if [ "${REF_NAME}" = "${DEFAULT_BRANCH}" ]; then
+            docker tag nsx-t-mockapi:ci "${image}:latest"
+            docker push "${image}:latest"
+          fi

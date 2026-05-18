@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+set -eu
+
+log() {
+	level="$1"
+	action="$2"
+	message="$3"
+	printf '{"level":"%s","action":"%s","message":"%s"}\n' "$level" "$action" "$message" >&2
+}
+
+run_step() {
+	action="$1"
+	shift
+
+	log "info" "$action" "starting"
+	if "$@"; then
+		log "info" "$action" "completed"
+		return 0
+	fi
+
+	status="$?"
+	log "error" "$action" "failed"
+	return "$status"
+}
+
+check_fmt() {
+	unformatted="$(gofmt -l ./cmd ./internal)"
+	if [ -n "$unformatted" ]; then
+		log "error" "fmt" "gofmt found unformatted files"
+		printf '%s\n' "$unformatted" >&2
+		return 1
+	fi
+	return 0
+}
+
+log "info" "quality-gates" "running fmt, vet, lint, and tests"
+run_step "fmt" check_fmt
+run_step "vet" go vet ./...
+run_step "lint" ./bin/golangci-lint run ./...
+run_step "test" go test ./...
+log "info" "quality-gates" "all quality gates completed"

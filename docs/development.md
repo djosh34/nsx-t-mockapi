@@ -15,3 +15,22 @@ make test-coverage
 
 `make lint-install` installs `golangci-lint` into `./bin/golangci-lint`.
 `make check` formats Go files, runs `go vet`, runs lint, and runs tests.
+
+## Test container
+
+Build the test-only image when you want a self-contained quality gate runner:
+
+```bash
+docker build -f Dockerfile.test -t nsx-t-mockapi:test .
+```
+
+The image build installs the pinned `golangci-lint` version and compiles the Go
+packages and tests. Start the container to run the quality gates and use the
+container exit code as the test result:
+
+```bash
+docker run --rm nsx-t-mockapi:test
+```
+
+The container logs each gate to stderr as JSON lines, then runs `gofmt` checks,
+`go vet`, `golangci-lint`, and `go test ./...`.

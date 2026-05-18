@@ -1,0 +1,24 @@
+FROM golang:1.26.3
+
+WORKDIR /src
+
+ARG GOLANGCI_LINT_VERSION=v2.11.4
+ENV GOBIN=/src/bin
+ENV PATH="/src/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY go.mod go.sum ./
+RUN go mod download \
+    && curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b /src/bin ${GOLANGCI_LINT_VERSION}
+
+COPY cmd ./cmd
+COPY internal ./internal
+COPY scripts/test-container ./scripts/test-container
+
+RUN chmod 0755 ./scripts/test-container \
+    && go test -run '^$' ./...
+
+ENTRYPOINT ["./scripts/test-container"]
