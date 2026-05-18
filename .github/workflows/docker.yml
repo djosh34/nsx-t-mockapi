@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   build:
@@ -16,16 +15,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
       - name: Build image
-        run: docker build --pull -t nsx-t-mockapi:ci .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          pull: true
+          tags: nsx-t-mockapi:ci
+          cache-from: type=gha,scope=nsx-t-mockapi
+          cache-to: type=gha,mode=max,scope=nsx-t-mockapi
 
       - name: Save image
         run: docker save nsx-t-mockapi:ci -o nsx-t-mockapi.tar
 
       - name: Upload image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nsx-t-mockapi-image
           path: nsx-t-mockapi.tar
@@ -36,10 +47,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
       - name: Build test image
-        run: docker build --pull -f Dockerfile.test -t nsx-t-mockapi:test .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.test
+          load: true
+          pull: true
+          tags: nsx-t-mockapi:test
+          cache-from: type=gha,scope=nsx-t-mockapi-test
+          cache-to: type=gha,mode=max,scope=nsx-t-mockapi-test
 
       - name: Run test image
         run: docker run --rm nsx-t-mockapi:test
@@ -47,13 +71,16 @@ jobs:
   publish:
     name: Publish to GHCR
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     needs:
       - build
       - test
     if: github.event_name == 'push'
     steps:
       - name: Download image
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nsx-t-mockapi-image
 
