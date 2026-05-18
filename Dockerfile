@@ -14,10 +14,13 @@ ARG TARGETARCH
 RUN target_os="${TARGETOS:-linux}"; \
     target_arch="${TARGETARCH:-$(go env GOARCH)}"; \
     CGO_ENABLED=0 GOOS="${target_os}" GOARCH="${target_arch}" \
-    go build -trimpath -ldflags="-s -w" -o /out/nsx-t-mockapi ./cmd/nsx-t-mockapi
+    go build -trimpath -ldflags="-s -w" -o /out/nsx-t-mockapi ./cmd/nsx-t-mockapi; \
+    CGO_ENABLED=0 GOOS="${target_os}" GOARCH="${target_arch}" \
+    go build -trimpath -ldflags="-s -w" -o /out/mocknsx ./cmd/mocknsx
 
 FROM scratch
 
 COPY --from=builder /out/nsx-t-mockapi /nsx-t-mockapi
+COPY --from=builder /out/mocknsx /mocknsx
 
 ENTRYPOINT ["/nsx-t-mockapi"]
