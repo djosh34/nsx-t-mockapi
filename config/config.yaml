@@ -1,0 +1,13 @@
+server:
+  listen_addr: "0.0.0.0:8080"
+database:
+  path: "/data/nsx-t-mockapi.db"
+realization:
+  default_delay_ms: 0
+  create_delay_ms: 0
+  update_delay_ms: 0
+  delete_delay_ms: 0
+  kind_delay_ms: {}
+search:
+  default_page_size: 1000
+  max_page_size: 1000

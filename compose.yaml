@@ -1,0 +1,25 @@
+services:
+  api:
+    image: nsx-t-mockapi:scratch
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["serve", "-config", "/config/config.yaml"]
+    ports:
+      - "${NSX_T_MOCKAPI_PORT:-8080}:8080"
+    volumes:
+      - type: bind
+        source: ./config/config.yaml
+        target: /config/config.yaml
+        read_only: true
+      - type: bind
+        source: ./data
+        target: /data
+    networks:
+      mockapi:
+        aliases:
+          - nsx-t-1
+          - nsx-t-2
+
+networks:
+  mockapi:

@@ -1,0 +1,1 @@
+.ralph/tasks/meta-task/hidden/01-task-manual-verification-audit.md

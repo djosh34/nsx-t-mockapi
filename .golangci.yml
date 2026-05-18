@@ -1,0 +1,59 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: all
+  disable:
+    # Documentation-only rules create churn before the public API shape exists.
+    - godoclint
+    - godot
+    # These style rules are subjective or premature for a small foundation package.
+    - decorder
+    - exhaustruct
+    - ireturn
+    - nlreturn
+    - noinlineerr
+    - nonamedreturns
+    - varnamelen
+    - wsl
+    - wsl_v5
+    # Project policy allows focused package state such as sentinel errors.
+    - gochecknoglobals
+    # Restriction lists need project-specific policy before they add signal.
+    - depguard
+    - forbidigo
+    # These produce noisy suggestions in tests and early foundation code.
+    - funlen
+    - maintidx
+  settings:
+    errcheck:
+      check-blank: true
+      check-type-assertions: true
+    govet:
+      enable:
+        - shadow
+      settings:
+        shadow:
+          strict: true
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          # Parallel subtest policy is useful later, but noisy for current
+          # filesystem-backed integration tests.
+          - paralleltest
+          # Test helpers often intentionally own temp-file setup details.
+          - thelper
+          # Assertions in tests are clearer when they stay close to setup.
+          - testpackage
+      - path: _test\.go
+        text: "G104:"
+        linters:
+          # Some cleanup calls in tests are best-effort after assertions have
+          # already failed; production code must still check all errors.
+          - gosec

@@ -1,0 +1,9 @@
+.git
+.ralph
+.agents
+.codex
+bin
+coverage.out
+data
+*.test
+tmp
