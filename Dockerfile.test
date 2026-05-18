@@ -19,6 +19,11 @@ COPY internal ./internal
 COPY scripts/test-container ./scripts/test-container
 
 RUN chmod 0755 ./scripts/test-container \
-    && go test -run '^$' ./...
+    && mkdir -p /tmp/test-binaries \
+    && for pkg in $(go list ./...); do \
+        pkg_name="$(printf '%s' "$pkg" | tr '/.' '__')"; \
+        go test -c -o "/tmp/test-binaries/${pkg_name}.test" "$pkg"; \
+    done \
+    && rm -rf /tmp/test-binaries
 
 ENTRYPOINT ["./scripts/test-container"]

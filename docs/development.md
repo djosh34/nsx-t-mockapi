@@ -24,13 +24,15 @@ Build the test-only image when you want a self-contained quality gate runner:
 docker build -f Dockerfile.test -t nsx-t-mockapi:test .
 ```
 
-The image build installs the pinned `golangci-lint` version and compiles the Go
-packages and tests. Start the container to run the quality gates and use the
+The image build installs the pinned `golangci-lint` version, downloads module
+dependencies, builds the Go commands, and compiles test binaries without
+running tests. Start the container to run the quality gates and use the
 container exit code as the test result:
 
 ```bash
 docker run --rm nsx-t-mockapi:test
 ```
 
-The container logs each gate to stderr as JSON lines, then runs `gofmt` checks,
-`go vet`, `golangci-lint`, and `go test ./...`.
+The container disables Go module network access, logs each gate to stderr as
+JSON lines, then runs `gofmt` checks, `go vet`, `golangci-lint`, and
+`go test ./...`.

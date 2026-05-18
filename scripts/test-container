@@ -34,6 +34,9 @@ check_fmt() {
 }
 
 log "info" "quality-gates" "running fmt, vet, lint, and tests"
+export GOPROXY=off
+export GOSUMDB=off
+log "debug" "go-env" "disabled module network access"
 run_step "fmt" check_fmt
 run_step "vet" go vet ./...
 run_step "lint" ./bin/golangci-lint run ./...
