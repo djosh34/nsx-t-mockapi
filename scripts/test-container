@@ -23,6 +23,23 @@ run_step() {
 	return "$status"
 }
 
+run_compiled_tests() {
+	manifest="/tmp/test-binaries/manifest.txt"
+	if [ ! -s "$manifest" ]; then
+		log "error" "test" "compiled test manifest is missing or empty"
+		return 1
+	fi
+
+	while read -r binary rel_dir; do
+		if [ -z "$binary" ] || [ -z "$rel_dir" ]; then
+			log "error" "test" "compiled test manifest contains an invalid entry"
+			return 1
+		fi
+		log "debug" "test" "running compiled test binary"
+		(cd "/src/$rel_dir" && "$binary")
+	done < "$manifest"
+}
+
 check_fmt() {
 	unformatted="$(gofmt -l ./cmd ./internal)"
 	if [ -n "$unformatted" ]; then
@@ -40,5 +57,5 @@ log "debug" "go-env" "disabled module network access"
 run_step "fmt" check_fmt
 run_step "vet" go vet ./...
 run_step "lint" ./bin/golangci-lint run ./...
-run_step "test" go test ./...
+run_step "test" run_compiled_tests
 log "info" "quality-gates" "all quality gates completed"

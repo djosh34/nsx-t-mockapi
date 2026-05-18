@@ -22,8 +22,10 @@ RUN chmod 0755 ./scripts/test-container \
     && mkdir -p /tmp/test-binaries \
     && for pkg in $(go list ./...); do \
         pkg_name="$(printf '%s' "$pkg" | tr '/.' '__')"; \
+        pkg_dir="$(go list -f '{{.Dir}}' "$pkg")"; \
+        rel_dir="${pkg_dir#/src/}"; \
         go test -c -o "/tmp/test-binaries/${pkg_name}.test" "$pkg"; \
-    done \
-    && rm -rf /tmp/test-binaries
+        printf '%s %s\n' "/tmp/test-binaries/${pkg_name}.test" "$rel_dir" >> /tmp/test-binaries/manifest.txt; \
+    done
 
 ENTRYPOINT ["./scripts/test-container"]

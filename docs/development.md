@@ -30,9 +30,9 @@ running tests. Start the container to run the quality gates and use the
 container exit code as the test result:
 
 ```bash
-docker run --rm nsx-t-mockapi:test
+docker run --rm --network none nsx-t-mockapi:test
 ```
 
 The container disables Go module network access, logs each gate to stderr as
 JSON lines, then runs `gofmt` checks, `go vet`, `golangci-lint`, and
-`go test ./...`.
+the compiled test binaries.
